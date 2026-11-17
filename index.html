@@ -1,0 +1,153 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Sayaç</title>
+  <style>
+    :root {
+      --bg: #f6f6f4;
+      --card: #ffffff;
+      --text: #1d1d1f;
+      --muted: #6e6e73;
+      --accent: #2f6fdf;
+      --danger: #c9372c;
+      --border: #e2e2e0;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #121214;
+        --card: #1c1c1f;
+        --text: #f2f2f2;
+        --muted: #9a9aa0;
+        --accent: #5b8ff0;
+        --danger: #e5665c;
+        --border: #2e2e33;
+      }
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      padding: 16px;
+      background: var(--bg);
+      color: var(--text);
+      font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+    }
+    .kart {
+      width: 100%;
+      max-width: 360px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 28px 24px;
+      text-align: center;
+    }
+    h1 { margin: 0 0 4px; font-size: 1.1rem; font-weight: 600; color: var(--muted); }
+    #deger {
+      font-size: 5rem;
+      font-weight: 700;
+      font-variant-numeric: tabular-nums;
+      margin: 12px 0 20px;
+      line-height: 1;
+    }
+    .butonlar { display: flex; gap: 12px; justify-content: center; }
+    button {
+      font: inherit;
+      cursor: pointer;
+      border-radius: 14px;
+      border: 1px solid var(--border);
+      background: var(--card);
+      color: var(--text);
+    }
+    .buyuk { width: 80px; height: 80px; font-size: 2rem; }
+    #arttir { background: var(--accent); border-color: var(--accent); color: #fff; }
+    button:active { transform: scale(0.96); }
+    .alt {
+      margin-top: 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+      color: var(--muted);
+      font-size: 0.9rem;
+    }
+    select {
+      font: inherit;
+      padding: 4px 6px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: var(--card);
+      color: var(--text);
+    }
+    #sifirla { padding: 6px 12px; color: var(--danger); }
+    .ipucu { margin-top: 16px; font-size: 0.8rem; color: var(--muted); }
+  </style>
+</head>
+<body>
+  <main class="kart">
+    <h1>Sayaç</h1>
+    <div id="deger" aria-live="polite">0</div>
+
+    <div class="butonlar">
+      <button id="azalt" class="buyuk" aria-label="Azalt">−</button>
+      <button id="arttir" class="buyuk" aria-label="Arttır">+</button>
+    </div>
+
+    <div class="alt">
+      <label>Adım
+        <select id="adim">
+          <option value="1">1</option>
+          <option value="5">5</option>
+          <option value="10">10</option>
+        </select>
+      </label>
+      <button id="sifirla">Sıfırla</button>
+    </div>
+
+    <p class="ipucu">Klavye: ↑ / + arttır · ↓ / − azalt · 0 sıfırla</p>
+  </main>
+
+  <script>
+    // Sayaç değeri tarayıcıda saklanır; sayfa kapansa da kaybolmaz.
+    const ANAHTAR = "sayac-degeri";
+
+    function oku() {
+      try { return Number(localStorage.getItem(ANAHTAR)) || 0; }
+      catch { return 0; }
+    }
+    function kaydet(v) {
+      try { localStorage.setItem(ANAHTAR, String(v)); } catch {}
+    }
+
+    let deger = oku();
+    const ekran = document.getElementById("deger");
+    const adimSecimi = document.getElementById("adim");
+
+    function guncelle() {
+      ekran.textContent = deger;
+      kaydet(deger);
+    }
+
+    const adim = () => Number(adimSecimi.value);
+    const arttir = () => { deger += adim(); guncelle(); };
+    const azalt = () => { deger -= adim(); guncelle(); };
+    const sifirla = () => { deger = 0; guncelle(); };
+
+    document.getElementById("arttir").addEventListener("click", arttir);
+    document.getElementById("azalt").addEventListener("click", azalt);
+    document.getElementById("sifirla").addEventListener("click", sifirla);
+
+    document.addEventListener("keydown", (e) => {
+      if (e.target.tagName === "SELECT") return;
+      if (e.key === "ArrowUp" || e.key === "+") arttir();
+      else if (e.key === "ArrowDown" || e.key === "-") azalt();
+      else if (e.key === "0") sifirla();
+    });
+
+    guncelle();
+  </script>
+</body>
+</html>
