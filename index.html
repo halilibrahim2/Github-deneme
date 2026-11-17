@@ -84,6 +84,38 @@
     }
     #sifirla { padding: 6px 12px; color: var(--danger); }
     .ipucu { margin-top: 16px; font-size: 0.8rem; color: var(--muted); }
+    #deger.eksi { color: var(--danger); }
+    #geriAl { padding: 6px 12px; }
+    #geriAl:disabled { opacity: 0.4; cursor: default; }
+    .hedef {
+      margin-top: 20px;
+      padding-top: 16px;
+      border-top: 1px solid var(--border);
+      text-align: left;
+      color: var(--muted);
+      font-size: 0.9rem;
+    }
+    .hedef label { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+    .hedef input {
+      font: inherit;
+      width: 96px;
+      padding: 4px 6px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: var(--card);
+      color: var(--text);
+      text-align: right;
+    }
+    .cubuk {
+      margin-top: 10px;
+      height: 8px;
+      border-radius: 99px;
+      background: var(--border);
+      overflow: hidden;
+    }
+    #doluluk { height: 100%; width: 0; background: var(--accent); transition: width 0.2s; }
+    #doluluk.tamam { background: #2e9e5b; }
+    #hedefDurum { margin-top: 6px; font-size: 0.8rem; min-height: 1em; }
   </style>
 </head>
 <body>
@@ -104,47 +136,111 @@
           <option value="10">10</option>
         </select>
       </label>
+      <button id="geriAl" disabled>Geri al</button>
       <button id="sifirla">Sıfırla</button>
     </div>
 
-    <p class="ipucu">Klavye: ↑ / + arttır · ↓ / − azalt · 0 sıfırla</p>
+    <div class="hedef">
+      <label>Hedef
+        <input id="hedef" type="number" inputmode="numeric" placeholder="yok">
+      </label>
+      <div class="cubuk" hidden id="cubuk"><div id="doluluk"></div></div>
+      <div id="hedefDurum"></div>
+    </div>
+
+    <p class="ipucu">Klavye: ↑ / + arttır · ↓ / − azalt · 0 sıfırla · Z geri al</p>
   </main>
 
   <script>
     // Sayaç değeri tarayıcıda saklanır; sayfa kapansa da kaybolmaz.
     const ANAHTAR = "sayac-degeri";
+    const ADIM_ANAHTARI = "sayac-adim";
+    const HEDEF_ANAHTARI = "sayac-hedef";
 
-    function oku() {
-      try { return Number(localStorage.getItem(ANAHTAR)) || 0; }
-      catch { return 0; }
+    function oku(anahtar) {
+      try { return localStorage.getItem(anahtar); }
+      catch { return null; }
     }
-    function kaydet(v) {
-      try { localStorage.setItem(ANAHTAR, String(v)); } catch {}
+    function kaydet(anahtar, v) {
+      try { localStorage.setItem(anahtar, String(v)); } catch {}
     }
 
-    let deger = oku();
+    let deger = Number(oku(ANAHTAR)) || 0;
+    const gecmis = []; // geri almak için önceki değerler
     const ekran = document.getElementById("deger");
     const adimSecimi = document.getElementById("adim");
+    const geriAlButonu = document.getElementById("geriAl");
+    const hedefKutusu = document.getElementById("hedef");
+    const cubuk = document.getElementById("cubuk");
+    const doluluk = document.getElementById("doluluk");
+    const hedefDurum = document.getElementById("hedefDurum");
+
+    // Seçilen adımı ve hedefi hatırla
+    const kayitliAdim = oku(ADIM_ANAHTARI);
+    if ([...adimSecimi.options].some(o => o.value === kayitliAdim)) adimSecimi.value = kayitliAdim;
+    hedefKutusu.value = oku(HEDEF_ANAHTARI) || "";
+
+    function hedefiGoster() {
+      const hedef = Number(hedefKutusu.value);
+      if (!hedefKutusu.value || !hedef) {
+        cubuk.hidden = true;
+        hedefDurum.textContent = "";
+        return;
+      }
+      cubuk.hidden = false;
+      const oran = Math.max(0, Math.min(1, deger / hedef));
+      doluluk.style.width = (oran * 100) + "%";
+      const ulasildi = hedef > 0 ? deger >= hedef : deger <= hedef;
+      doluluk.classList.toggle("tamam", ulasildi);
+      hedefDurum.textContent = ulasildi
+        ? "Hedefe ulaşıldı 🎉"
+        : `Hedefe ${Math.abs(hedef - deger)} kaldı`;
+    }
 
     function guncelle() {
       ekran.textContent = deger;
-      kaydet(deger);
+      ekran.classList.toggle("eksi", deger < 0);
+      geriAlButonu.disabled = gecmis.length === 0;
+      kaydet(ANAHTAR, deger);
+      hedefiGoster();
+    }
+
+    function degistir(yeni) {
+      if (yeni === deger) return;
+      gecmis.push(deger);
+      if (gecmis.length > 100) gecmis.shift();
+      deger = yeni;
+      guncelle();
     }
 
     const adim = () => Number(adimSecimi.value);
-    const arttir = () => { deger += adim(); guncelle(); };
-    const azalt = () => { deger -= adim(); guncelle(); };
-    const sifirla = () => { deger = 0; guncelle(); };
+    const arttir = () => degistir(deger + adim());
+    const azalt = () => degistir(deger - adim());
+    const sifirla = () => degistir(0);
+    const geriAl = () => {
+      if (!gecmis.length) return;
+      deger = gecmis.pop();
+      guncelle();
+    };
 
     document.getElementById("arttir").addEventListener("click", arttir);
     document.getElementById("azalt").addEventListener("click", azalt);
     document.getElementById("sifirla").addEventListener("click", sifirla);
+    geriAlButonu.addEventListener("click", geriAl);
+    adimSecimi.addEventListener("change", () => kaydet(ADIM_ANAHTARI, adimSecimi.value));
+    hedefKutusu.addEventListener("input", () => {
+      kaydet(HEDEF_ANAHTARI, hedefKutusu.value);
+      hedefiGoster();
+    });
 
     document.addEventListener("keydown", (e) => {
-      if (e.target.tagName === "SELECT") return;
+      if (e.target.tagName === "SELECT" || e.target.tagName === "INPUT") return;
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "z") { e.preventDefault(); geriAl(); return; }
+      if (e.metaKey || e.ctrlKey || e.altKey) return;
       if (e.key === "ArrowUp" || e.key === "+") arttir();
       else if (e.key === "ArrowDown" || e.key === "-") azalt();
       else if (e.key === "0") sifirla();
+      else if (e.key.toLowerCase() === "z") geriAl();
     });
 
     guncelle();

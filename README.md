@@ -7,7 +7,11 @@ Tarayıcıda çalışan basit bir sayaç uygulaması. Kurulum gerektirmez.
 - Arttırma, azaltma ve sıfırlama
 - Adım seçimi (1, 5, 10)
 - Değer tarayıcıda saklanır, sayfa kapansa da kaybolmaz
-- Klavye kısayolları: `↑` / `+` arttır, `↓` / `−` azalt, `0` sıfırla
+- Geri alma (son 100 işlem)
+- Hedef belirleme ve ilerleme çubuğu
+- Seçilen adım ve hedef de hatırlanır
+- Negatif değerler kırmızı gösterilir
+- Klavye kısayolları: `↑` / `+` arttır, `↓` / `−` azalt, `0` sıfırla, `Z` (veya `⌘Z` / `Ctrl+Z`) geri al
 - Açık ve koyu tema (sistem ayarına göre)
 
 ## Kullanım
